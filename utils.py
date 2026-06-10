@@ -14,11 +14,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from time import sleep
 import openai
-from truthfulqa import utilities, metrics
-from truthfulqa.configs import BEST_COL, ANSWER_COL, INCORRECT_COL
-from truthfulqa.models import set_columns, MC_calcs
-from truthfulqa.evaluate import format_frame
-from truthfulqa.utilities import (
+from TruthfulQA.truthfulqa import utilities, metrics
+from TruthfulQA.truthfulqa.configs import BEST_COL, ANSWER_COL, INCORRECT_COL
+from TruthfulQA.truthfulqa.models import set_columns, MC_calcs
+from TruthfulQA.truthfulqa.evaluate import format_frame
+from TruthfulQA.truthfulqa.utilities import (
     format_prompt,
     format_prompt_with_answer_strings,
     split_multi_answer,
