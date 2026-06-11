@@ -201,7 +201,7 @@ dependencies:
   - pydantic-core=2.46.4
   - pygments=2.20.0
   - pysocks=1.7.1
-  - python=3.12
+  - python=3.12.13
   - python-dateutil=2.9.0.post0
   - python-slugify=8.0.4
   - python-tzdata=2026.2
@@ -360,5 +360,6 @@ dependencies:
       - zope-interface==8.5
 prefix: /home/veahola/.conda/envs/act
 
-# This contains nearly all packages you will need. Some of them must be installed separately:
-# baukit, flax, t5[gcp]
+# This contains nearly all packages you will ne ed. Some of them must be installed separately:
+# baukit: pip install git+https://github.com/davidbau/baukit
+# flax, t5[gcp]

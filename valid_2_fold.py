@@ -52,7 +52,7 @@ def main():
     torch.cuda.manual_seed_all(args.seed)
 
     # load dataframe and activations direcitons
-    df = pd.read_csv('./TruthfulQA/TruthfulQA.csv')
+    df = pd.read_csv('ACT/TruthfulQA/TruthfulQA.csv')
     # hand fixing some inconsistency between the csv version from github and the one from the huggingface dataset
     df.loc[164] = {'Type': 'Adversarial',
     'Category': 'Logical Falsehood',
@@ -74,7 +74,7 @@ def main():
     # order csv by huggingface order, the order used to save activations
     # url = "https://huggingface.co/api/datasets/truthful_qa/parquet/multiple_choice/validation/0.parquet"
     # dataset = load_dataset('parquet', data_files=url)['train']
-    dataset = load_dataset('truthful_qa', 'multiple_choice')['validation']
+    dataset = load_dataset('truthfulqa/truthful_qa', 'multiple_choice')['validation']
     golden_q_order = list(dataset["question"])
     df = df.sort_values(by='Question', key=lambda x: x.map({k: i for i, k in enumerate(golden_q_order)}))
 
