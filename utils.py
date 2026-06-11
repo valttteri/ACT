@@ -106,7 +106,15 @@ def tokenized_tqa_all(dataset, tokenizer, ref_df=None):
         question = dataset[i]['question']
         choices = dataset[i]['mc2_targets']['choices']
         labels = dataset[i]['mc2_targets']['labels']
-        category = ref_df.loc[ref_df['Question'] == question, 'Category'].iloc[0] if ref_df is not None else 'Unknown'
+
+        # This takes the row where the currect question is located, and selects the Category-column 
+        new_category = ref_df.loc[ref_df['Question'] == question, 'Category']
+
+        # If category is missing i.e. length is zero, set category to unknown
+        if len(new_category) == 0:
+          category = "Unknown"
+        else:
+            category = ref_df.loc[ref_df['Question'] == question, 'Category'].iloc[0] if ref_df is not None else 'Unknown'
 
         assert len(choices) == len(labels), (len(choices), len(labels))
 
@@ -130,7 +138,9 @@ def get_llama_activations_bau(model, prompt, device):
 
     model.eval()
 
-    HEADS = [f"model.layers.{i}.self_attn.head_out" for i in range(model.config.num_hidden_layers)]
+    #HEADS = [f"model.layers.{i}.self_attn.head_out" for i in range(model.config.num_hidden_layers)]
+    HEADS = [f"model.layers.{i}.self_attn.o_proj" for i in range(model.config.num_hidden_layers)]
+
     MLPS = [f"model.layers.{i}.mlp" for i in range(model.config.num_hidden_layers)]
 
     with torch.no_grad():
@@ -144,6 +154,10 @@ def get_llama_activations_bau(model, prompt, device):
         head_wise_hidden_states = torch.stack(head_wise_hidden_states, dim = 0).squeeze().numpy()
         mlp_wise_hidden_states = [ret[mlp].output.squeeze().detach().cpu() for mlp in MLPS]
         mlp_wise_hidden_states = torch.stack(mlp_wise_hidden_states, dim = 0).squeeze().numpy()
+
+    # Clear cache  
+    del ret
+    torch.cuda.empty_cache()
 
     return hidden_states, head_wise_hidden_states, mlp_wise_hidden_states
 
