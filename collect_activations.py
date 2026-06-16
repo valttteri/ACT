@@ -17,6 +17,11 @@ import transformers.models.llama.modeling_llama as tf_model_llama
 import os
 import glob
 
+from dotenv import load_dotenv
+load_dotenv()
+
+HF_TOKEN = os.environ.get("HF_TOKEN")
+
 def main(): 
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', type=str, default='llama_7B')
@@ -42,7 +47,7 @@ def main():
     print("Tokenizer ok")
 
     #model = llama.LlamaForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto')
-    model = tf_model_llama.LlamaForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto')
+    model = tf_model_llama.LlamaForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto', token=HF_TOKEN)
     print("LlamaforCausalLm ok")
 
     device = model.device

@@ -159,6 +159,7 @@ def get_llama_activations_bau(model, prompt, device):
     del ret
     torch.cuda.empty_cache()
 
+    # Layer-wise activations, head-wise activations, mlp-wise activations
     return hidden_states, head_wise_hidden_states, mlp_wise_hidden_states
 
 def get_separated_activations(labels, head_wise_activations): 
