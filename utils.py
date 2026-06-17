@@ -135,7 +135,7 @@ def tokenized_tqa_all(dataset, tokenizer, ref_df=None):
 
 
 def get_llama_activations_bau(model, prompt, device): 
-
+    """Activation collection used by collect_activations.py"""
     model.eval()
 
     #HEADS = [f"model.layers.{i}.self_attn.head_out" for i in range(model.config.num_hidden_layers)]
@@ -162,17 +162,25 @@ def get_llama_activations_bau(model, prompt, device):
     # Layer-wise activations, head-wise activations, mlp-wise activations
     return hidden_states, head_wise_hidden_states, mlp_wise_hidden_states
 
-def get_separated_activations(labels, head_wise_activations): 
+def get_separated_activations(labels, head_wise_activations):
+    """This is used during steering vector generation in generate_directions_q_wise.py""" 
     # url = "https://huggingface.co/api/datasets/truthful_qa/parquet/multiple_choice/validation/0.parquet"
     # dataset = load_dataset('parquet', data_files=url)['train']
-    dataset = load_dataset('truthful_qa', 'multiple_choice')['validation']
+    dataset = load_dataset('truthfulqa/truthful_qa', 'multiple_choice')['validation']
+
     actual_labels = []
-    for i in range(len(dataset)):
+    for i in range(len(dataset)): 
+        # The labels are like [1, 0, 0, 0] where each spot represents a candidate answer
+        # Ones are correct, zeroes incorrect
         actual_labels.append(dataset[i]['mc2_targets']['labels'])
 
-    idxs_to_split_at = np.cumsum([len(x) for x in actual_labels])        
+    # Array like [0, 4, 12, 18, 24,...5882]
+    idxs_to_split_at = np.cumsum([len(x) for x in actual_labels])
+    print("idxs_to_split_at:", idxs_to_split_at[:10])        
 
     labels = list(labels)
+    #print("actual labels", actual_labels[:3])
+    #print("gen labels", labels[:3])
     separated_labels = []
     for i in range(len(idxs_to_split_at)):
         if i == 0:
