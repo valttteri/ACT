@@ -3,7 +3,7 @@ import os
 import glob
 from dotenv import load_dotenv
 
-def main():
+def check_cuda():
     is_cuda_available = torch.cuda.is_available()
     device_count = torch.cuda.device_count()
     curr_devices = torch.cuda.current_device()
@@ -36,5 +36,5 @@ def check_pickle_order():
     chunks = sorted(glob.glob(f'ACT/activations/llama_7b_head_wise_chunk_*.pkl'))
     print("chunks", chunks)
 
-if __name__ == "__main__":
-    hf_home_is_correct()
+#if __name__ == "__main__":
+#    hf_home_is_correct()
