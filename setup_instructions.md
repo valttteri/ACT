@@ -85,3 +85,10 @@ Another change is that we clear the cache. This is related to the custom batch p
 del ret
 torch.cuda.empty_cache()
 ```
+
+### Commands
+
+Evaluate
+```bash
+python ACT/valid_2_fold.py --model_name llama_7B --num_heads 24 --alpha 12 --n_clusters 3 --probe_base_weight 0 --judge_name "GPT-4.1 nano" --info_name "GPT-4.1 nano"
+```

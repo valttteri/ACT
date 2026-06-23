@@ -4,7 +4,7 @@ import numpy as np
 import pickle as pkl
 from einops import rearrange
 from utils import get_separated_activations
-from checks import hf_home_is_correct
+from checks import hf_home_is_correct, check_gpu_usage
 
 def main():
     if not hf_home_is_correct(): # HF_HOME must be set correctly
@@ -19,10 +19,22 @@ def main():
     # Load activations and labels
     head_wise_activations = pkl.load(open(f'ACT/activations/{args.model_name}_head_wise.pkl', 'rb'))
     labels = pkl.load(open(f'ACT/activations/{args.model_name}_labels.pkl', 'rb'))
+    print("Activations and labels loaded")
+    check_gpu_usage()
+    
 
     num_heads = 32
-    head_wise_activations = rearrange(head_wise_activations, 'b l (h d) -> b l h d', h = num_heads)
-    separated_head_wise_activations, separated_labels, idxs_to_split_at = get_separated_activations(labels, head_wise_activations)
+    head_wise_activations_rearranged = rearrange(head_wise_activations, 'b l (h d) -> b l h d', h = num_heads)
+
+    del head_wise_activations
+    print("Activations rearranged")
+    check_gpu_usage()
+
+    separated_head_wise_activations, separated_labels, idxs_to_split_at = get_separated_activations(labels, head_wise_activations_rearranged)
+
+    del head_wise_activations_rearranged
+    print("Activations separated")
+    check_gpu_usage()
     
     # Generate directions for each question
     pairs = list(zip(separated_head_wise_activations, separated_labels))
@@ -40,12 +52,12 @@ def main():
     #    if len(act) != len(label):
     #        print(f"Pair {i}/{len(pairs)} is wrong: {len(act)}, {len(label)}")
     #    print("num acts, labels:", len(act), len(label))
-        #truthful = act[np.array(label) == 1].mean(axis=0)
-        #untruthful = act[np.array(label) == 0].mean(axis=0) 
+    #    truthful = act[np.array(label) == 1].mean(axis=0)
+    #    untruthful = act[np.array(label) == 0].mean(axis=0) 
 
-    #head_wise_activation_directions = np.array([a[np.array(l) == 1].mean(axis=0) - a[np.array(l) == 0].mean(axis=0) for a, l in zip(separated_head_wise_activations, separated_labels)])
+    head_wise_activation_directions = np.array([a[np.array(l) == 1].mean(axis=0) - a[np.array(l) == 0].mean(axis=0) for a, l in zip(separated_head_wise_activations, separated_labels)])
     pkl.dump(head_wise_activation_directions, open(f'ACT/directions/{args.model_name}_directions.pkl', 'wb'))
-
+    print("Direction generated")
 
 if __name__ == '__main__':
     main()

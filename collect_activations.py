@@ -12,9 +12,6 @@ import sys
 from functools import partial
 from checks import hf_home_is_correct
 
-import transformers.models.llama.tokenization_llama as tf_token_llama
-import transformers.models.llama.modeling_llama as tf_model_llama
-
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 import os
@@ -55,18 +52,10 @@ def main():
 
     print("About to run tokenizer")
     tokenizer = AutoTokenizer.from_pretrained(MODEL)
-    #tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b")
     print("Tokenizer ok")
 
     #model = llama.LlamaForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto')
-    #model = tf_model_llama.LlamaForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto', token=HF_TOKEN)
     model = AutoModelForCausalLM.from_pretrained(MODEL, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto', token=HF_TOKEN)
-
-    #model = AutoModelForCausalLM.from_pretrained(
-    #    "google/gemma-2b",
-    #    device_map="auto",
-    #    attn_implementation="sdpa"
-    #)
     
     print("ModelForCausalLM ok")
 

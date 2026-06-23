@@ -167,3 +167,4 @@ validation/
 
 .vscode
 actenv
+*.bash
