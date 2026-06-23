@@ -25,7 +25,6 @@ from TruthfulQA.truthfulqa.utilities import (
     format_best,
 )
 
-
 ENGINE_MAP = {
         'llama_7B': 'yahma/llama-7b-hf',
         'llama2_7B': 'meta-llama/Llama-2-7b-hf', 

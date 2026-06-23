@@ -9,10 +9,11 @@ import sys
 import os
 from datasets import load_dataset
 from utils import get_separated_activations, get_cluster_idxs, get_top_heads_cluster, get_cluster_probe_interventions_dict_with_cluster_info, alt_tqa_evaluate
-from checks import hf_home_is_correct, check_cuda
+from checks import hf_home_is_correct, check_cuda, check_gpu_usage
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from dotenv import load_dotenv
+load_dotenv()
 
 HF_NAMES = {
         'llama_7B': 'yahma/llama-7b-hf',
@@ -31,7 +32,6 @@ def main():
         return
     check_cuda()
     torch.cuda.empty_cache() # Empty cache, to avoid error 137
-    load_dotenv()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default='llama_7B', choices=HF_NAMES.keys(), help='model name')
@@ -86,11 +86,6 @@ def main():
 
     print("Loading dataset")
     dataset = load_dataset('truthfulqa/truthful_qa', 'multiple_choice')['validation']
-
-    # Load from CSC
-    #data_dir = os.environ.get("PROJECT_DIR") + "/huggingface/datasets/truthfulqa___truthful_qa"
-    #dataset = load_dataset(f'{data_dir}') 
-    
     
     golden_q_order = list(dataset["question"])
     df = df.sort_values(by='Question', key=lambda x: x.map({k: i for i, k in enumerate(golden_q_order)}))
@@ -104,8 +99,6 @@ def main():
 
     # create model
     model_name = HF_NAMES[args.model_name]
-    #tokenizer = llama.LlamaTokenizer.from_pretrained(model_name)
-    #model = llama.LlamaForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto')
 
     model = AutoModelForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto', token=HF_TOKEN)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -116,7 +109,7 @@ def main():
     num_layers = model.config.num_hidden_layers
     num_heads = model.config.num_attention_heads
 
-    # load activations 
+    # load activations
     head_wise_activations = pkl.load(open(f'ACT/activations/{args.model_name}_head_wise.pkl', 'rb'))
     labels = pkl.load(open(f'ACT/activations/{args.model_name}_labels.pkl', 'rb'))
     head_wise_activations = rearrange(head_wise_activations, 'b l (h d) -> b l h d', h = num_heads)
