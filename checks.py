@@ -2,6 +2,8 @@ import torch
 import os
 import glob
 from dotenv import load_dotenv
+import pynvml
+
 
 def check_cuda():
     print("\n###### Check cuda status ######\n")
@@ -29,7 +31,7 @@ def hf_home_is_correct():
     hf_dir = os.environ.get("HF_HOME")
     
     if hf_dir != target_dir:
-        print("HF_HOME set incorrectly as", hf_dir)
+        print("HF_HOME was set incorrectly as", hf_dir)
         return False
     
     print("HF_HOME correct", hf_dir)
@@ -43,6 +45,14 @@ def check_pickle_order():
     chunks = sorted(glob.glob(f'ACT/activations/llama_7b_head_wise_chunk_*.pkl'))
     print("chunks", chunks)
 
+def check_nvml():
+    try:
+        print("Initializing pynvml")
+        pynvml.nvmlInit()
+        print(f"Driver Version: {pynvml.nvmlSystemGetDriverVersion()}")
+    except Exception as e:
+        print("Error:", e)
+
 if __name__ == "__main__":
     #check_gpu_usage(msg="Checking")
-    check_cuda()
+    check_nvml()

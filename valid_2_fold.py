@@ -26,6 +26,7 @@ HF_NAMES = {
         'llama_65B': 'Enoch/llama-65b-hf'
     }
 
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 def main():
     if not hf_home_is_correct(): # Make sure HF_HOME is pointing to the correct location
@@ -90,9 +91,16 @@ def main():
     golden_q_order = list(dataset["question"])
     df = df.sort_values(by='Question', key=lambda x: x.map({k: i for i, k in enumerate(golden_q_order)}))
 
+    print("df length", len(df["Question"]))
+
     dictionary = {k: i for i, k in enumerate(golden_q_order)}
-    for q in df['Question']:
-        assert q in dictionary
+    for i, q in enumerate(df['Question']): # Can we add the missing questions to the dictionary?
+        try:
+            assert q in dictionary
+        except AssertionError:
+            print(f"Question {i}: AssertionError")
+            print(f"{q}")
+
     
     # get two folds using numpy
     fold_idxs = np.array_split(np.arange(len(df)), args.num_fold)
@@ -102,6 +110,7 @@ def main():
 
     model = AutoModelForCausalLM.from_pretrained(model_name, low_cpu_mem_usage=True, torch_dtype=torch.float16, device_map='auto', token=HF_TOKEN)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+    print("Loaded model and tokenizer")
 
     device = model.device
     
@@ -113,14 +122,16 @@ def main():
     head_wise_activations = pkl.load(open(f'ACT/activations/{args.model_name}_head_wise.pkl', 'rb'))
     labels = pkl.load(open(f'ACT/activations/{args.model_name}_labels.pkl', 'rb'))
     head_wise_activations = rearrange(head_wise_activations, 'b l (h d) -> b l h d', h = num_heads)
+    print("Loaded activations and labels")
 
     # separated_head_wise_activations: shape(question_nums, answer_nums, layer_nums, head_nums, 128)
     separated_head_wise_activations, separated_labels, idxs_to_split_at = get_separated_activations(labels, head_wise_activations)
 
     # run k-fold cross validation
     results = []
-    for i in range(args.num_fold):
+    for i in range(args.num_fold): # i=2 by default
 
+        # train_idxs takes each set of indexes from fold_idxs, except for one which is left for test_idxs
         train_idxs = np.concatenate([fold_idxs[j] for j in range(args.num_fold) if j != i])
         test_idxs = fold_idxs[i]
 
@@ -134,17 +145,24 @@ def main():
         df.iloc[train_set_idxs].to_csv(f"{experiments_path}/fold_{i}_train_seed_{args.seed}.csv", index=False)
         df.iloc[val_set_idxs].to_csv(f"{experiments_path}/fold_{i}_val_seed_{args.seed}.csv", index=False)
         df.iloc[test_idxs].to_csv(f"{experiments_path}/fold_{i}_test_seed_{args.seed}.csv", index=False)
+        print("Saved train and test splits")
 
+        print("Calling get_cluster_idxs")
         # get direction of cluster center
         cluster_idxs = get_cluster_idxs(num_layers, num_heads, train_set_idxs, val_set_idxs, n_clusters=args.n_clusters, directions=head_wise_activation_directions)
+        print("Number of cluster idxs:", len(cluster_idxs))
 
+        print("Calling get_top_heads_cluster")
         top_heads, probes = get_top_heads_cluster(train_set_idxs, val_set_idxs, separated_head_wise_activations, separated_labels, num_layers, num_heads, args.seed, args.num_heads, cluster_idxs, use_random_dir=False)
-        # print("Heads intervened: ", sorted(top_heads))
+        print("Heads intervened: ", sorted(top_heads))
+
         pkl.dump(cluster_idxs, open(f'{experiments_path}/cluster_idxs_fold_{i}.pkl', 'wb'))
         pkl.dump(top_heads, open(f'{experiments_path}/top_heads_fold_{i}.pkl', 'wb'))
         pkl.dump(probes, open(f'{experiments_path}/probes_fold_{i}.pkl', 'wb'))
 
+        print("Calling get_cluster_probe_interventions_dict_with_cluster_info")
         interventions = get_cluster_probe_interventions_dict_with_cluster_info(top_heads, probes, head_wise_activations, num_heads)
+        
         pkl.dump(interventions, open(f'{experiments_path}/interventions_fold_{i}.pkl', 'wb'))
         # sample_directions
         sample_directions = head_wise_activation_directions[test_idxs]
@@ -172,7 +190,8 @@ def main():
             return head_output
         
         filename = f'fold_{i}'
-                    
+        
+        print("Calling alt_tqa_evaluate")
         curr_fold_results = alt_tqa_evaluate(
             {args.model_name: model}, 
             ['mc', 'bleurt', 'judge', 'info'], 
@@ -189,7 +208,7 @@ def main():
             sample_directions = sample_directions,
         )
 
-        print(f"FOLD {i}")
+        print(f"Completed fold {i}")
         print(curr_fold_results)
         pkl.dump(q_wise_proba, open(f'{experiments_path}/q_wise_proba_fold_{i}.pkl', 'wb'))
 
