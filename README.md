@@ -42,3 +42,7 @@ python generate_directions_q_wise.py --model_name llama_7B
 ```
 python valid_2_fold.py --model_name llama_7B --num_heads 24 --alpha 12 --n_clusters 3 --probe_base_weight 0 --judge_name <your GPT-judge name> --info_name <your GPT-info name>
 ```
+For example:
+```
+python ACT/valid_2_fold.py --model_name llama_7B --num_heads 24 --alpha 12 --n_clusters 3 --probe_base_weight 0 --judge_name "GPT-4.1 mini" --info_name "GPT-4.1 mini"
+```

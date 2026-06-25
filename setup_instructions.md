@@ -86,6 +86,15 @@ del ret
 torch.cuda.empty_cache()
 ```
 
+### In utils.py, get_cluster_probe_interventions_dict_with_cluster_info()
+
+I ran into a LookupError when running valid_2_fold.py, and I think it was caused by self_attn.head_out being absent. The only place where I found self_attn.head_out, was inside this function. I changed them to self_attn.o_proj, which might not solve the issue. The o_proj attribute probably is wrong, as it according to my knowledge contains the concatenated activations of a transformer block.
+
+```python
+#interventions[f"model.layers.{layer}.self_attn.head_out"]
+interventions[f"model.layers.{layer}.self_attn.o_proj"]  
+```
+
 ### Commands
 
 Evaluate
